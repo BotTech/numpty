@@ -1,13 +1,16 @@
+import Common._
 import Dependencies._
 
-name := "checkity"
+lazy val root = commonProject("root", file(".")).settings(
+  name := "checkity"
+).aggregate(base, core, macros)
 
-organization := "nz.co.bottech"
+lazy val base = commonProject("base", file("checkity-base")).settings(
+  libraryDependencies += scalaTest
+)
 
-organizationName := "BotTech"
+lazy val macros = commonProject("macros", file("checkity-macros")).settings(
+  libraryDependencies ++= Seq(scalaCompiler, scalaReflect)
+).dependsOn(base)
 
-version := "0.1"
-
-scalaVersion := Versions.scalaVersion
-
-libraryDependencies ++= compileDependencies
+lazy val core = commonProject("core", file("checkity-core")).dependsOn(base, macros)
