@@ -6,8 +6,6 @@ import org.scalatest.words.ResultOfContainWord
 
 import scala.collection.GenTraversable
 
-object AdditionalContainsWord extends AdditionalContainsWord
-
 trait AdditionalContainsWord {
 
   implicit class AdditionalResultOfContainWord[L](result: ResultOfContainWord[L]) {
@@ -21,3 +19,5 @@ trait AdditionalContainsWord {
     }
   }
 }
+
+object AdditionalContainsWord extends AdditionalContainsWord

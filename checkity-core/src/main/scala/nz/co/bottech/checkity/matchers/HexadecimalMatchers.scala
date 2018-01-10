@@ -3,8 +3,6 @@ package nz.co.bottech.checkity.matchers
 import nz.co.bottech.checkity.Hexadecimal._
 import org.scalatest.matchers.{BeMatcher, MatchResult}
 
-object HexadecimalMatchers extends HexadecimalMatchers
-
 trait HexadecimalMatchers {
 
   val hexChar = new HexCharMatcher
@@ -28,3 +26,5 @@ trait HexadecimalMatchers {
   }
 
 }
+
+object HexadecimalMatchers extends HexadecimalMatchers
