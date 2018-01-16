@@ -7,6 +7,7 @@ import org.scalactic.Requirements._
 import scala.annotation.tailrec
 import scala.math.Numeric.{BigDecimalAsIfIntegral, BigDecimalIsFractional, BigIntIsIntegral, ByteIsIntegral, CharIsIntegral, DoubleIsFractional, FloatIsFractional, IntIsIntegral, LongIsIntegral, ShortIsIntegral}
 
+// TODO: Make this a real typeclass and get rid of the unbounded numeric
 sealed trait NumericBounds[T] {
 
   implicit val num: Numeric[T]
@@ -109,7 +110,7 @@ object NumericBounds {
 
     def negate(x: T): Either[NumericError, T] = minus(zero, x)
 
-    def fromInt(x: Int): Either[BoundsError, T] = checkBounds(num.fromInt(x))
+    def fromInt(x: Int): Either[NumericError, T] = checkBounds(num.fromInt(x))
 
     def toInt(x: T): Int = num.toInt(x)
 
@@ -119,20 +120,21 @@ object NumericBounds {
 
     def toDouble(x: T): Double = num.toDouble(x)
 
-    private def checkIncrement(x: T, y: T, result: T): Either[NumericError, T] = {
+    protected def checkIncrement(x: T, y: T, result: T): Either[NumericError, T] = {
       if (result < x) Left(Overflow)
       else checkBounds(result)
     }
 
-    private def checkDecrement(x: T, y: T, result: T): Either[NumericError, T] = {
+    protected def checkDecrement(x: T, y: T, result: T): Either[NumericError, T] = {
       if (result > x) Left(Underflow)
       else checkBounds(result)
     }
 
-    private def checkBounds(x: T): Either[BoundsError, T] = {
+    protected def checkBounds(x: T): Either[NumericError, T] = {
       if (x < lower) Left(BelowLowerBound(x))
       else if (x > upper) Left(AboveUpperBound(x))
-      else Right(x)
+      else if (x >= lower && x <= upper) Right(x)
+      else Left(InvalidNumber(x))
     }
 
     override final def equals(obj: Any): Boolean = obj match {
@@ -169,6 +171,8 @@ object NumericBounds {
 
     case class AboveUpperBound[T](value: T) extends BoundsError
 
+    case class InvalidNumber[T](value: T) extends NumericError
+
   }
 
   trait UnboundedNumeric[T] extends NumericBounds[T]
@@ -178,18 +182,41 @@ object NumericBounds {
     override implicit val num: Numeric[BigDecimal] = BigDecimalIsFractional
   }
 
-  implicit object DoubleBounds extends BoundedNumeric[Double] {
+  implicit object DoubleBounds extends BoundedNumeric[Double] with ApproachesInfinity[Double] {
 
     override val lower: Double = Double.MinValue
     override val upper: Double = Double.MaxValue
     override implicit val num: Numeric[Double] = DoubleIsFractional
+
+    override protected val positiveInfinity: Double = Double.PositiveInfinity
+    override protected val negativeInfinity: Double = Double.NegativeInfinity
   }
 
-  implicit object FloatBounds extends BoundedNumeric[Float] {
+  implicit object FloatBounds extends BoundedNumeric[Float] with ApproachesInfinity[Float] {
 
     override val lower: Float = Float.MinValue
     override val upper: Float = Float.MaxValue
     override implicit val num: Numeric[Float] = FloatIsFractional
+
+    override protected val positiveInfinity: Float = Float.PositiveInfinity
+    override protected val negativeInfinity: Float = Float.NegativeInfinity
+  }
+
+  trait ApproachesInfinity[T] {
+    this: BoundedNumeric[T] =>
+
+    protected def positiveInfinity: T
+
+    protected def negativeInfinity: T
+
+    override def times(x: T, y: T): Either[NumericError, T] = checkResult(x, y, num.times)
+
+    protected def checkResult(x: T, y: T, operation: (T, T) => T): Either[NumericError, T] = {
+      val result = operation(x, y)
+      if (result == positiveInfinity) Left(AboveUpperBound(result))
+      else if (result == negativeInfinity) Left(BelowLowerBound(result))
+      else checkBounds(result)
+    }
   }
 
 }
