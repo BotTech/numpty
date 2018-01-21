@@ -1,11 +1,12 @@
 package nz.co.bottech.checkity
 
+import java.util.Objects
+
 import nz.co.bottech.checkity.NumericBounds.BoundedNumeric._
-import nz.co.bottech.checkity.NumericBounds.{BoundedNumeric, UnboundedNumeric}
 import org.scalactic.Requirements._
 
 import scala.annotation.tailrec
-import scala.math.Numeric.{BigDecimalAsIfIntegral, BigDecimalIsFractional, BigIntIsIntegral, ByteIsIntegral, CharIsIntegral, DoubleIsFractional, FloatIsFractional, IntIsIntegral, LongIsIntegral, ShortIsIntegral}
+import scala.math.Numeric.{BigDecimalIsFractional, BigIntIsIntegral, DoubleIsFractional, FloatIsFractional}
 
 // TODO: Make this a real typeclass and get rid of the unbounded numeric
 sealed trait NumericBounds[T] {
@@ -15,13 +16,15 @@ sealed trait NumericBounds[T] {
 
 object NumericBounds {
 
-  trait BoundedNumeric[T] extends NumericBounds[T] {
+  trait BoundedNumeric[T] extends NumericBounds[T] with Equals {
 
-    def lower: T
-
-    def upper: T
+    val lower: T
+    val upper: T
 
     import num._
+
+    // TODO: Need to make the results some WithinBounds[T] that has the value and bounds.
+    // TODO: Should we provide a Numeric[WithinBounds[T]] so it can be used as a Numeric?
 
     def plus(x: T, y: T): Either[NumericError, T] = {
       val result = x + y
@@ -112,14 +115,6 @@ object NumericBounds {
 
     def fromInt(x: Int): Either[NumericError, T] = checkBounds(num.fromInt(x))
 
-    def toInt(x: T): Int = num.toInt(x)
-
-    def toLong(x: T): Long = num.toLong(x)
-
-    def toFloat(x: T): Float = num.toFloat(x)
-
-    def toDouble(x: T): Double = num.toDouble(x)
-
     protected def checkIncrement(x: T, y: T, result: T): Either[NumericError, T] = {
       if (result < x) Left(Overflow)
       else checkBounds(result)
@@ -130,6 +125,7 @@ object NumericBounds {
       else checkBounds(result)
     }
 
+    // TODO: Have a way of putting a T into a WithinBounds[T].
     protected def checkBounds(x: T): Either[NumericError, T] = {
       if (x < lower) Left(BelowLowerBound(x))
       else if (x > upper) Left(AboveUpperBound(x))
@@ -137,10 +133,14 @@ object NumericBounds {
       else Left(InvalidNumber(x))
     }
 
+    override def canEqual(that: Any): Boolean = that.isInstanceOf[BoundedNumeric[_]]
+
     override final def equals(obj: Any): Boolean = obj match {
-      case other: BoundedNumeric[T] => equiv(lower, other.lower) && equiv(upper, other.upper)
-      case _                        => false
+      case that: BoundedNumeric[_] => that.canEqual(this) && lower == that.lower && upper == that.upper
+      case _                       => false
     }
+
+    override def hashCode(): Int = Objects.hash(lower, upper)
 
     override def toString: String = s"BoundedNumeric(lower = $lower, upper = $upper)"
   }
@@ -177,26 +177,33 @@ object NumericBounds {
 
   trait UnboundedNumeric[T] extends NumericBounds[T]
 
-  implicit object BigDecimalBounds extends UnboundedNumeric[BigDecimal] {
+  abstract class UnboundedNumericBase[T](implicit numeric: Numeric[T]) extends UnboundedNumeric[T] {
 
-    override implicit val num: Numeric[BigDecimal] = BigDecimalIsFractional
+    override implicit val num: Numeric[T] = numeric
   }
 
-  implicit object DoubleBounds extends BoundedNumeric[Double] with ApproachesInfinity[Double] {
+  implicit object BigDecimalBounds extends UnboundedNumericBase[BigDecimal]
+
+  implicit object BigIntBoundsBase extends UnboundedNumericBase[BigInt]
+
+  abstract class BoundedNumericBase[T](implicit numeric: Numeric[T]) extends BoundedNumeric[T] {
+
+    override implicit val num: Numeric[T] = numeric
+  }
+
+  implicit object DoubleBounds extends BoundedNumericBase[Double] with ApproachesInfinity[Double] {
 
     override val lower: Double = Double.MinValue
     override val upper: Double = Double.MaxValue
-    override implicit val num: Numeric[Double] = DoubleIsFractional
 
     override protected val positiveInfinity: Double = Double.PositiveInfinity
     override protected val negativeInfinity: Double = Double.NegativeInfinity
   }
 
-  implicit object FloatBounds extends BoundedNumeric[Float] with ApproachesInfinity[Float] {
+  implicit object FloatBounds extends BoundedNumericBase[Float] with ApproachesInfinity[Float] {
 
     override val lower: Float = Float.MinValue
     override val upper: Float = Float.MaxValue
-    override implicit val num: Numeric[Float] = FloatIsFractional
 
     override protected val positiveInfinity: Float = Float.PositiveInfinity
     override protected val negativeInfinity: Float = Float.NegativeInfinity
@@ -217,66 +224,6 @@ object NumericBounds {
       else if (result == negativeInfinity) Left(BelowLowerBound(result))
       else checkBounds(result)
     }
-  }
-
-}
-
-trait IntegralBounds[T] extends NumericBounds[T] {
-
-  override implicit val num: Integral[T]
-}
-
-object IntegralBounds {
-
-  trait BoundedIntegral[T] extends BoundedNumeric[T] with IntegralBounds[T]
-
-  implicit object BigDecimalBounds extends UnboundedNumeric[BigDecimal] {
-
-    // Note that this is not the default Numeric for BigDecimal but it works better with NumericRange
-    override implicit val num: Numeric[BigDecimal] = BigDecimalAsIfIntegral
-  }
-
-  implicit object BigIntBounds extends UnboundedNumeric[BigInt] {
-
-    override implicit val num: Numeric[BigInt] = BigIntIsIntegral
-  }
-
-  implicit object ByteBounds extends BoundedIntegral[Byte] {
-
-    override val lower: Byte = Byte.MinValue
-    override val upper: Byte = Byte.MaxValue
-    override implicit val num: Integral[Byte] = ByteIsIntegral
-  }
-
-  implicit object CharBounds extends BoundedIntegral[Char] {
-
-    override val lower: Char = Char.MinValue
-    override val upper: Char = Char.MaxValue
-    override implicit val num: Integral[Char] = CharIsIntegral
-  }
-
-  implicit object IntBounds extends BoundedIntegral[Int] {
-
-    override val lower: Int = Int.MinValue
-    override val upper: Int = Int.MaxValue
-    override implicit val num: Integral[Int] = IntIsIntegral
-  }
-
-  implicit object LongBounds extends BoundedIntegral[Long] {
-
-    override val lower: Long = Long.MinValue
-    override val upper: Long = Long.MaxValue
-    override implicit val num: Integral[Long] = LongIsIntegral
-  }
-
-  implicit object ShortBounds extends BoundedIntegral[Short] {
-
-    override val lower: Short = Short.MinValue
-    override val upper: Short = Short.MaxValue
-    override implicit val num: Integral[Short] = ShortIsIntegral
-  }
-
-  case class PositiveBigDecimal(value: BigDecimal) {
   }
 
 }

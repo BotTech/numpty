@@ -1,7 +1,7 @@
 package nz.co.bottech.checkity.generators
 
 import nz.co.bottech.checkity.IntegralBounds
-import nz.co.bottech.checkity.IntegralBounds.BoundedIntegral
+import nz.co.bottech.checkity.IntegralBounds.{BoundedIntegral, UnboundedIntegral}
 import nz.co.bottech.checkity.NumericBounds._
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen.Choose
@@ -14,7 +14,7 @@ object NumericRangeGen {
   implicit def arbitraryNumericRanges[T: Arbitrary : Choose](implicit precision: IntegralBounds[T]): Arbitrary[NumericRange[T]] = {
     import precision.num
     precision match {
-      case _: UnboundedNumeric[T]     => arbitraryUnboundedNumericRanges[T]
+      case _: UnboundedIntegral[_]     => arbitraryUnboundedNumericRanges[T]
       case bounded: BoundedIntegral[T] =>
         implicit val boundedPrecision: BoundedIntegral[T] = bounded
         arbitraryBoundedNumericRanges[T]

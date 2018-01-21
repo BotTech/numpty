@@ -1,5 +1,6 @@
 package nz.co.bottech.checkity
 
+import nz.co.bottech.checkity.IntegralBounds.IntBounds
 import nz.co.bottech.checkity.NumericBounds.BoundedNumeric.{AboveUpperBound, BelowLowerBound, InvalidNumber, NumericError}
 import nz.co.bottech.checkity.generators.FloatingPointGen
 import org.scalacheck.Gen.Choose
@@ -227,6 +228,39 @@ class NumericBoundsSpec extends PropSpec with GeneratorDrivenPropertyChecks with
     forAll(operandsOfProductWithinBounds(nextToZero)) { case (x, y) =>
       DoubleBounds.times(x, y) shouldBe Right(x * y)
     }
+  }
+
+  property("Negating double positive infinity is negative infinity") {
+    DoubleBounds.negate(Double.PositiveInfinity) shouldBe Left(BelowLowerBound(Double.NegativeInfinity))
+  }
+
+  property("Negating double negative infinity is positive infinity") {
+    DoubleBounds.negate(Double.NegativeInfinity) shouldBe Left(AboveUpperBound(Double.PositiveInfinity))
+  }
+
+  property("Negating double not a number is not a number") {
+    DoubleBounds.negate(Double.NaN) shouldEqual Left(InvalidNumber(Double.NaN))
+  }
+
+  property("Negating a double is the same as negation") {
+    forAll(Gen.choose(Double.MinValue, Double.MaxValue)) { x: Double =>
+      DoubleBounds.negate(x) shouldBe Right(-x)
+    }
+  }
+
+  property("Double from int is the same as to double") {
+    forAll { x: Int =>
+      DoubleBounds.fromInt(x) shouldBe Right(x.toDouble)
+    }
+  }
+
+  // TODO: Can we use that test library (d... something) to test the laws of equality here?
+  property("Double bounds is equal to itself") {
+    DoubleBounds shouldEqual DoubleBounds
+  }
+
+  property("Double bounds is not equal to another bounds with a different type") {
+    DoubleBounds should not equal IntBounds
   }
 
   private def sameResult[T: ClassTag](x: Either[NumericError, T], y: Any)(implicit eq: Equality[T]): Boolean = y match {
