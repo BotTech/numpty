@@ -60,7 +60,7 @@ object Common {
       "-Ywarn-value-discard"               // Warn when non-Unit expression results are unused.
     ),
     resolvers += Resolver.sonatypeRepo("releases"),
-    libraryDependencies ++= compileDependencies ++ testDependencies
+    libraryDependencies ++= testDependencies
   )
 
   def commonProject(id: String, file: File): Project = Project(id, file).settings(commonSettings)

@@ -15,11 +15,8 @@ object Dependencies {
   val scalaCheck = "org.scalacheck" %% "scalacheck" % scalaCheckVersion
   val scalaTest = "org.scalatest" %% "scalatest" % scalaTestVersion
 
-  val compileDependencies = Seq(
-    scalaCheck
-  )
-
   val testDependencies: Seq[ModuleID] = Seq(
+    scalaCheck,
     scalaTest
   ).map(_.withConfigurations(Some(Test.name)))
 }

@@ -18,10 +18,7 @@ class NumericBoundsSpec extends PropSpec with GeneratorDrivenPropertyChecks with
 
   private def noShrink[T]: Shrink[T] = Shrink[T](_ => Stream.empty)
 
-  // Shrinking obscures the real failure.
   private implicit val noShrinkDouble: Shrink[Double] = noShrink[Double]
-
-  implicit override val generatorDrivenConfig: PropertyCheckConfiguration = PropertyCheckConfiguration(minSuccessful = 100000)
 
   private implicit val doubleEquality: Equality[Double] = {
     case (x: Double, y: Double) => x == y || (x.isNaN && y.isNaN)
