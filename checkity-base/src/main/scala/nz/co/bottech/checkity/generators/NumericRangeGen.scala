@@ -1,8 +1,7 @@
 package nz.co.bottech.checkity.generators
 
-import nz.co.bottech.checkity.IntegralBounds
-import nz.co.bottech.checkity.IntegralBounds.{BoundedIntegral, UnboundedIntegral}
-import nz.co.bottech.checkity.NumericBounds._
+import nz.co.bottech.checkity.{IntegralBounds, NumericBounds}
+import nz.co.bottech.checkity.IntegralBounds.{BoundedIntegral, IntegralWithoutBounds}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen.Choose
 import org.scalacheck.{Arbitrary, Gen, Shrink}
@@ -14,7 +13,7 @@ object NumericRangeGen {
   implicit def arbitraryNumericRanges[T: Arbitrary : Choose](implicit precision: IntegralBounds[T]): Arbitrary[NumericRange[T]] = {
     import precision.num
     precision match {
-      case _: UnboundedIntegral[_]     => arbitraryUnboundedNumericRanges[T]
+      case _: IntegralWithoutBounds[_] => arbitraryUnboundedNumericRanges[T]
       case bounded: BoundedIntegral[T] =>
         implicit val boundedPrecision: BoundedIntegral[T] = bounded
         arbitraryBoundedNumericRanges[T]
@@ -66,7 +65,7 @@ object NumericRangeGen {
     }
   }
 
-  private[checkity] def chooseStep[T: Choose](size: T)(implicit bounds: BoundedNumeric[T]) = {
+  private[checkity] def chooseStep[T: Choose](size: T)(implicit bounds: NumericBounds[T]) = {
     import bounds._
     import num._
     // TODO: signum of zero is zero
@@ -106,7 +105,7 @@ object NumericRangeGen {
     }
   }
 
-  private def chooseStart[T: Choose](size: T, inclusive: Boolean)(implicit bounds: BoundedNumeric[T]) = {
+  private def chooseStart[T: Choose](size: T, inclusive: Boolean)(implicit bounds: NumericBounds[T]) = {
     import bounds._
     import num._
     val max = if (inclusive) upper - size + one else upper - size

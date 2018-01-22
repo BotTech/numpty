@@ -1,6 +1,6 @@
 package nz.co.bottech.checkity.generators
 
-import nz.co.bottech.checkity.NumericBounds.BoundedNumeric
+import nz.co.bottech.checkity.NumericBounds
 import org.scalacheck.Gen
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
 import org.scalatest.{Matchers, OptionValues, PropSpec}
@@ -13,9 +13,9 @@ class NumericRangeGenSpec extends PropSpec with GeneratorDrivenPropertyChecks wi
   import NumericRangeGen._
 
   property("step must be within bounds") {
-    forAll { (size: Int, bounds: BoundedNumeric[Int]) =>
+    forAll { (size: Int, bounds: NumericBounds[Int]) =>
       whenever(size > 0) {
-        implicit val boundedPrecision: BoundedNumeric[Int] = bounds
+        implicit val boundedPrecision: NumericBounds[Int] = bounds
         val stepGenerator = chooseStep[Int](size)
         stepGenerator.sample.value should (be >= bounds.lower and be <= bounds.upper)
       }
@@ -23,9 +23,9 @@ class NumericRangeGenSpec extends PropSpec with GeneratorDrivenPropertyChecks wi
   }
 
   property("step must not be zero") {
-    forAll { (size: Int, bounds: BoundedNumeric[Int]) =>
+    forAll { (size: Int, bounds: NumericBounds[Int]) =>
       whenever(size > 0) {
-        implicit val boundedPrecision: BoundedNumeric[Int] = bounds
+        implicit val boundedPrecision: NumericBounds[Int] = bounds
         val stepGenerator = chooseStep[Int](size)
         stepGenerator.sample.value should not be 0
       }
@@ -33,15 +33,15 @@ class NumericRangeGenSpec extends PropSpec with GeneratorDrivenPropertyChecks wi
   }
 
   property("step must not be zero 2") {
-    implicit val boundedPrecision: BoundedNumeric[Int] = BoundedNumeric(-2050164641, 1)
+    implicit val boundedPrecision: NumericBounds[Int] = NumericBounds(-2050164641, 1)
     val stepGenerator = chooseStep[Int](3)
     stepGenerator.sample.value should not be 0
   }
 
   property("step should account for bounds and desired size when the size is within the bounds") {
-    forAll { (desiredSize: Int, bounds: BoundedNumeric[Int]) =>
+    forAll { (desiredSize: Int, bounds: NumericBounds[Int]) =>
       whenever(desiredSize > 0 && withinBounds(desiredSize, bounds)) {
-        implicit val boundedPrecision: BoundedNumeric[Int] = bounds
+        implicit val boundedPrecision: NumericBounds[Int] = bounds
         val stepGenerator = chooseStep[Int](desiredSize)
         val step = stepGenerator.sample.value
         val lowerSize = math.abs(bounds.lower / step)
@@ -56,9 +56,9 @@ class NumericRangeGenSpec extends PropSpec with GeneratorDrivenPropertyChecks wi
   }
 
   property("step should one when the size is outside of the bounds") {
-    forAll { (desiredSize: Int, bounds: BoundedNumeric[Int]) =>
+    forAll { (desiredSize: Int, bounds: NumericBounds[Int]) =>
       whenever(desiredSize > 0 && !withinBounds(desiredSize, bounds)) {
-        implicit val boundedPrecision: BoundedNumeric[Int] = bounds
+        implicit val boundedPrecision: NumericBounds[Int] = bounds
         val stepGenerator = chooseStep[Int](desiredSize)
         val step = stepGenerator.sample.value
         step shouldBe 1
@@ -93,7 +93,7 @@ class NumericRangeGenSpec extends PropSpec with GeneratorDrivenPropertyChecks wi
     }
   }
 
-  def withinBounds(x: Int, bounds: BoundedNumeric[Int]): Boolean = {
+  def withinBounds(x: Int, bounds: NumericBounds[Int]): Boolean = {
     import bounds._
     if (math.signum(lower) == math.signum(upper)) x <= upper - lower + 1
     else x <= upper || lower <= x - upper - 1

@@ -1,7 +1,5 @@
 package nz.co.bottech.checkity
 
-import nz.co.bottech.checkity.NumericBounds.{BoundedNumeric, UnboundedNumeric}
-
 import scala.math.Numeric.BigDecimalAsIfIntegral
 
 sealed trait IntegralBounds[T] {
@@ -11,16 +9,16 @@ sealed trait IntegralBounds[T] {
 
 object IntegralBounds {
 
-  trait UnboundedIntegral[T] extends UnboundedNumeric[T] with IntegralBounds[T]
+  trait IntegralWithoutBounds[T] extends NumericWithoutBounds[T] with IntegralBounds[T]
 
-  trait BoundedIntegral[T] extends BoundedNumeric[T] with IntegralBounds[T]
+  trait BoundedIntegral[T] extends NumericBounds[T] with IntegralBounds[T]
 
   abstract class BoundedIntegralBase[T](implicit integral: Integral[T]) extends BoundedIntegral[T] {
 
     override val num: Integral[T] = integral
   }
 
-  implicit object BigDecimalIntegralBounds extends UnboundedIntegral[BigDecimal] {
+  implicit object BigDecimalIntegralBounds extends IntegralWithoutBounds[BigDecimal] {
 
     // This is not the default Numeric for BigDecimal but it works better with NumericRange
     override val num: Integral[BigDecimal] = BigDecimalAsIfIntegral

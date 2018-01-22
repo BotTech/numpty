@@ -1,8 +1,9 @@
 package nz.co.bottech.checkity
 
 import nz.co.bottech.checkity.IntegralBounds.IntBounds
-import nz.co.bottech.checkity.NumericBounds.BoundedNumeric.{AboveUpperBound, BelowLowerBound, InvalidNumber, NumericError}
 import nz.co.bottech.checkity.generators.FloatingPointGen
+import nz.co.bottech.checkity.NumericError._
+import nz.co.bottech.checkity.NumericBounds._
 import org.scalacheck.Gen.Choose
 import org.scalacheck.{Gen, Shrink}
 import org.scalactic.Equality
@@ -14,7 +15,6 @@ import scala.reflect.ClassTag
 class NumericBoundsSpec extends PropSpec with GeneratorDrivenPropertyChecks with Matchers {
 
   import FloatingPointGen._
-  import NumericBounds._
 
   private def noShrink[T]: Shrink[T] = Shrink[T](_ => Stream.empty)
 
@@ -36,16 +36,8 @@ class NumericBoundsSpec extends PropSpec with GeneratorDrivenPropertyChecks with
   // The smallest number larger than one that can always be multiplied to a double and not be lost to rounding.
   private val smallestDoubleFactor = 1.0000000000000002
 
-  property("Big Decimal bounds is unbounded") {
-    BigDecimalBounds shouldBe an[UnboundedNumeric[_]]
-  }
-
-  property("Big Decimal numeric is the same instance as the implicit numeric") {
-    BigDecimalBounds.num shouldBe theSameInstanceAs(implicitly[Numeric[BigDecimal]])
-  }
-
   property("Double bounds is bounded") {
-    DoubleBounds shouldBe a[BoundedNumeric[_]]
+    DoubleBounds shouldBe a[NumericBounds[_]]
   }
 
   property("Double numeric is the same instance as the implicit numeric") {
@@ -255,12 +247,21 @@ class NumericBoundsSpec extends PropSpec with GeneratorDrivenPropertyChecks with
   }
 
   // TODO: Can we use that test library (d... something) to test the laws of equality here?
+  // TODO: Test equality on NumericBounds directly
   property("Double bounds is equal to itself") {
-    DoubleBounds shouldEqual DoubleBounds
+    DoubleBounds shouldBe DoubleBounds
   }
 
   property("Double bounds is not equal to another bounds with a different type") {
-    DoubleBounds should not equal IntBounds
+    DoubleBounds should not be IntBounds
+  }
+
+  property("Double bounds is not equal to something else") {
+    DoubleBounds should not be (DoubleBounds.lower, DoubleBounds.upper)
+  }
+
+  property("Double bounds should print as a numeric bounds") {
+    DoubleBounds.toString shouldBe s"BoundedNumeric"
   }
 
   private def sameResult[T: ClassTag](x: Either[NumericError, T], y: Any)(implicit eq: Equality[T]): Boolean = y match {
@@ -271,7 +272,7 @@ class NumericBoundsSpec extends PropSpec with GeneratorDrivenPropertyChecks with
     case _ => x == y
   }
 
-  private def operandsOfLargeSum[T: Choose](step: T)(implicit bounds: BoundedNumeric[T]): Gen[(T, T)] = {
+  private def operandsOfLargeSum[T: Choose](step: T)(implicit bounds: NumericBounds[T]): Gen[(T, T)] = {
     import bounds._
     import num._
     for {
@@ -280,7 +281,7 @@ class NumericBoundsSpec extends PropSpec with GeneratorDrivenPropertyChecks with
     } yield (x, y)
   }
 
-  private def operandsOfSmallSum[T: Choose](step: T)(implicit bounds: BoundedNumeric[T]): Gen[(T, T)] = {
+  private def operandsOfSmallSum[T: Choose](step: T)(implicit bounds: NumericBounds[T]): Gen[(T, T)] = {
     import bounds._
     import num._
     for {
@@ -289,7 +290,7 @@ class NumericBoundsSpec extends PropSpec with GeneratorDrivenPropertyChecks with
     } yield (x, y)
   }
 
-  private def operandsOfSumWithinBounds[T: Choose](nextToZero: T => T)(implicit bounds: BoundedNumeric[T]): Gen[(T, T)] = {
+  private def operandsOfSumWithinBounds[T: Choose](nextToZero: T => T)(implicit bounds: NumericBounds[T]): Gen[(T, T)] = {
     import bounds._
     import num._
     val aNonNegative = for {
@@ -303,7 +304,7 @@ class NumericBoundsSpec extends PropSpec with GeneratorDrivenPropertyChecks with
     Gen.oneOf(aNonNegative, aNonPositive)
   }
 
-  private def operandsOfLargeDifference[T: Choose](step: T)(implicit bounds: BoundedNumeric[T]): Gen[(T, T)] = {
+  private def operandsOfLargeDifference[T: Choose](step: T)(implicit bounds: NumericBounds[T]): Gen[(T, T)] = {
     import bounds._
     import num._
     for {
@@ -312,7 +313,7 @@ class NumericBoundsSpec extends PropSpec with GeneratorDrivenPropertyChecks with
     } yield (x, y)
   }
 
-  private def operandsOfSmallDifference[T: Choose](step: T)(implicit bounds: BoundedNumeric[T]): Gen[(T, T)] = {
+  private def operandsOfSmallDifference[T: Choose](step: T)(implicit bounds: NumericBounds[T]): Gen[(T, T)] = {
     import bounds._
     import num._
     for {
@@ -322,7 +323,7 @@ class NumericBoundsSpec extends PropSpec with GeneratorDrivenPropertyChecks with
   }
 
   private def operandsOfDifferenceWithinBounds[T: Choose](nextToZero: T => T)
-                                                         (implicit bounds: BoundedNumeric[T]): Gen[(T, T)] = {
+                                                         (implicit bounds: NumericBounds[T]): Gen[(T, T)] = {
     import bounds._
     import num._
     val aNonNegative = for {
@@ -337,7 +338,7 @@ class NumericBoundsSpec extends PropSpec with GeneratorDrivenPropertyChecks with
   }
 
   private def operandsOfLargeProduct[T: Choose](factor: T)(increment: T => T)
-                                               (implicit bounds: BoundedNumeric[T],
+                                               (implicit bounds: NumericBounds[T],
                                                 fractional: Fractional[T]): Gen[(T, T)] = {
     import bounds._
     import fractional._
@@ -348,7 +349,7 @@ class NumericBoundsSpec extends PropSpec with GeneratorDrivenPropertyChecks with
   }
 
   private def operandsOfSmallProduct[T: Choose](factor: T)(increment: T => T)
-                                               (implicit bounds: BoundedNumeric[T],
+                                               (implicit bounds: NumericBounds[T],
                                                 fractional: Fractional[T]): Gen[(T, T)] = {
     import bounds._
     import fractional._
@@ -359,7 +360,7 @@ class NumericBoundsSpec extends PropSpec with GeneratorDrivenPropertyChecks with
   }
 
   private def operandsOfProductWithinBounds[T: Choose](shrink: T => T)
-                                                      (implicit bounds: BoundedNumeric[T],
+                                                      (implicit bounds: NumericBounds[T],
                                                        fractional: Fractional[T]): Gen[(T, T)] = {
     import bounds._
     import fractional._
