@@ -12,9 +12,6 @@ object Dependencies {
 
   import Versions._
 
-  val scalaCompiler = "org.scala-lang" % "scala-compiler" % scalaVersion
-  val scalaReflect = "org.scala-lang" % "scala-reflect" % scalaVersion
-
   val scalaCheck = "org.scalacheck" %% "scalacheck" % scalaCheckVersion
   val scalaTest = "org.scalatest" %% "scalatest" % scalaTestVersion
 
@@ -22,7 +19,7 @@ object Dependencies {
     scalaCheck
   )
 
-  val testDependencies = Seq(
+  val testDependencies: Seq[ModuleID] = Seq(
     scalaTest
   ).map(_.withConfigurations(Some(Test.name)))
 }
