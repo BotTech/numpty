@@ -3,13 +3,25 @@ package nz.co.bottech.numpty
 import nz.co.bottech.numpty.NumericError._
 
 import scala.annotation.tailrec
-import scala.math.Numeric.{DoubleIsFractional, FloatIsFractional}
+import simulacrum._
 
-// TODO: Make this a real typeclass and get rid of the unbounded numeric
-trait NumericBounds[T] extends Equals {
+@typeclass trait NumericBoundsNew[T] extends Equals {
 
   val lower: T
   val upper: T
+
+  def boundedPlus(x: T, y: T): Either[NumericError, T]
+
+  def boundedMinus(x: T, y: T): Either[NumericError, T]
+
+  def boundedTimes(x: T, y: T): Either[NumericError, T]
+
+  def boundedNegate(x: T): Either[NumericError, T]
+
+  def boundedFromInt(x: Int): Either[NumericError, T]
+}
+
+trait NumericBoundsNewBase[T] extends NumericBoundsNew[T] {
 
   implicit val num: Numeric[T]
 
@@ -125,10 +137,10 @@ trait NumericBounds[T] extends Equals {
     else Left(InvalidNumber(x))
   }
 
-  override def canEqual(that: Any): Boolean = that.isInstanceOf[NumericBounds[_]]
+  override def canEqual(that: Any): Boolean = that.isInstanceOf[NumericBoundsNew[_]]
 
   override def equals(obj: Any): Boolean = obj match {
-    case that: NumericBounds[_] => that.canEqual(this) && lower == that.lower && upper == that.upper && num == that.num
+    case that: NumericBoundsNew[_] => that.canEqual(this) && lower == that.lower && upper == that.upper && num == that.num
     case _                      => false
   }
 
@@ -137,59 +149,7 @@ trait NumericBounds[T] extends Equals {
     ((prime + lower.hashCode()) * prime + upper.hashCode()) * prime + num.hashCode()
   }
 
-  override def toString: String = s"NumericBounds(lower = $lower, upper = $upper)"
+  override def toString: String = s"NumericBoundsNew(lower = $lower, upper = $upper)"
 }
 
-object NumericBounds {
 
-  def apply[T](low: T, high: T)(implicit numeric: Numeric[T]): NumericBounds[T] = {
-    import Ordered._
-    require(low <= high)
-    new NumericBounds[T] {
-      override implicit val num: Numeric[T] = numeric
-      override val lower: T = low
-      override val upper: T = high
-    }
-  }
-
-  abstract class BoundedNumericBase[T](implicit numeric: Numeric[T]) extends NumericBounds[T] {
-
-    override implicit val num: Numeric[T] = numeric
-  }
-
-  implicit object DoubleBounds extends BoundedNumericBase[Double] with ApproachesInfinity[Double] {
-
-    override val lower: Double = Double.MinValue
-    override val upper: Double = Double.MaxValue
-
-    override protected val positiveInfinity: Double = Double.PositiveInfinity
-    override protected val negativeInfinity: Double = Double.NegativeInfinity
-  }
-
-  implicit object FloatBounds extends BoundedNumericBase[Float] with ApproachesInfinity[Float] {
-
-    override val lower: Float = Float.MinValue
-    override val upper: Float = Float.MaxValue
-
-    override protected val positiveInfinity: Float = Float.PositiveInfinity
-    override protected val negativeInfinity: Float = Float.NegativeInfinity
-  }
-
-  trait ApproachesInfinity[T] {
-    this: NumericBounds[T] =>
-
-    protected def positiveInfinity: T
-
-    protected def negativeInfinity: T
-
-    override def times(x: T, y: T): Either[NumericError, T] = checkResult(x, y, num.times)
-
-    protected def checkResult(x: T, y: T, operation: (T, T) => T): Either[NumericError, T] = {
-      val result = operation(x, y)
-      if (result == positiveInfinity) Left(AboveUpperBound(result))
-      else if (result == negativeInfinity) Left(BelowLowerBound(result))
-      else checkBounds(result)
-    }
-  }
-
-}

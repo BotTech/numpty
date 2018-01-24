@@ -10,7 +10,7 @@ object Common {
     organization := "nz.co.bottech",
     organizationName := "BotTech",
     version := "0.1",
-    scalaVersion := Versions.scalaVersion,
+    scalaVersion := Versions.scala,
     // These are the suggestions from https://tpolecat.github.io/2017/04/25/scalac-flags.html
     scalacOptions := Seq(
       "-deprecation",                      // Emit warning and location for usages of deprecated APIs.

@@ -11,6 +11,10 @@ lazy val root = commonProject("root", file(".")).settings(
 )
 
 lazy val core = commonProject("core", file("numpty-core"))
+  .settings(
+    addCompilerPlugin(macroParadise cross CrossVersion.full),
+    libraryDependencies += simulacrum
+  )
 
 lazy val testkit = commonProject("testkit", file("numpty-testkit"))
   .dependsOn(core)

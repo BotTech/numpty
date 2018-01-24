@@ -4,19 +4,30 @@ object Dependencies {
 
   object Versions {
 
-    val scalaVersion = "2.12.3"
+    val scala = "2.12.3"
 
-    val scalaCheckVersion = "1.13.5"
-    val scalaTestVersion = "3.0.4"
+    val macroParadise = "2.1.0"
+
+    val simulacrum = "0.11.0"
+
+    val scalaCheck = "1.13.5"
+    val scalaTest = "3.0.4"
+
+    val discipline = "0.8"
   }
 
-  import Versions._
+  val macroParadise = "org.scalamacros" % "paradise" % Versions.macroParadise
 
-  val scalaCheck = "org.scalacheck" %% "scalacheck" % scalaCheckVersion
-  val scalaTest = "org.scalatest" %% "scalatest" % scalaTestVersion
+  val simulacrum = "com.github.mpilquist" %% "simulacrum" % Versions.simulacrum
+
+  val scalaCheck = "org.scalacheck" %% "scalacheck" % Versions.scalaCheck
+  val scalaTest = "org.scalatest" %% "scalatest" % Versions.scalaTest
+
+  val discipline = "org.typelevel" %% "discipline" % Versions.discipline
 
   val testDependencies: Seq[ModuleID] = Seq(
     scalaCheck,
-    scalaTest
+    scalaTest,
+    discipline
   ).map(_.withConfigurations(Some(Test.name)))
 }

@@ -243,8 +243,11 @@ class NumericBoundsSpec extends PropSpec with GeneratorDrivenPropertyChecks with
     }
   }
 
-  // TODO: Can we use that test library (d... something) to test the laws of equality here?
-  // TODO: Test equality on NumericBounds directly
+  // TODO: Use discipline to test the laws of equality here.
+  // Reflexive
+  // Symmetric
+  // Transitive
+  // Consistent
   property("Double bounds is equal to itself") {
     DoubleBounds shouldBe DoubleBounds
   }
@@ -257,8 +260,8 @@ class NumericBoundsSpec extends PropSpec with GeneratorDrivenPropertyChecks with
     DoubleBounds should not be((DoubleBounds.lower, DoubleBounds.upper))
   }
 
-  property("Double bounds should print as a numeric bounds") {
-    DoubleBounds.toString shouldBe s"BoundedNumeric"
+  property("Double bounds should print as numeric bounds") {
+    DoubleBounds.toString shouldBe s"NumericBounds(lower = ${DoubleBounds.lower}, upper = ${DoubleBounds.upper})"
   }
 
   private def sameResult[T: ClassTag](x: Either[NumericError, T], y: Any)(implicit eq: Equality[T]): Boolean = y match {
