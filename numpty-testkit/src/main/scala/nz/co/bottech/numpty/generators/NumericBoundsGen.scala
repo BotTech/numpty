@@ -2,24 +2,25 @@ package nz.co.bottech.numpty.generators
 
 import nz.co.bottech.numpty.NumericBounds
 import nz.co.bottech.numpty.helpers.StreamHelper
-import org.scalacheck.{Arbitrary, Shrink}
 import org.scalacheck.Arbitrary.arbitrary
+import org.scalacheck.{Arbitrary, Shrink}
 
 object NumericBoundsGen {
 
-  implicit def arbitraryBoundedNumeric[T: Arbitrary](implicit num: Numeric[T]): Arbitrary[NumericBounds[T]] = {
+  implicit def arbitraryNumericBounds[T: Arbitrary](implicit numeric: Numeric[T]): Arbitrary[NumericBounds[T]] = {
     Arbitrary {
       for {
         a <- arbitrary[T]
         b <- arbitrary[T]
-      } yield NumericBounds(num.min(a, b), num.max(a, b))
+      } yield NumericBounds(numeric.min(a, b), numeric.max(a, b))
     }
   }
 
-  implicit def boundedNumericShrinker[T](implicit shrinker: Shrink[T]): Shrink[NumericBounds[T]] = {
+  implicit def boundedNumericShrinker[T](implicit numeric: Numeric[T],
+                                         shrinker: Shrink[T]): Shrink[NumericBounds[T]] = {
     Shrink { bounds =>
       import bounds._
-      import bounds.num._
+      import numeric._
       if (upper >= lower) Stream.empty
       else {
         val shrinkLower = shrinker.shrink(lower).filter(_ >= upper)

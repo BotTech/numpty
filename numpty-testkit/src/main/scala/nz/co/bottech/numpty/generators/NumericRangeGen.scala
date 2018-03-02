@@ -1,7 +1,7 @@
 package nz.co.bottech.numpty.generators
 
-import nz.co.bottech.numpty.{IntegralBounds, NumericBounds}
-import nz.co.bottech.numpty.IntegralBounds.{BoundedIntegral, IntegralWithoutBounds}
+import nz.co.bottech.numpty.NumericBounds
+import nz.co.bottech.numpty.NumericBounds.NumericBoundsToInfinity
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalacheck.Gen.Choose
 import org.scalacheck.{Arbitrary, Gen, Shrink}
@@ -10,13 +10,11 @@ import scala.collection.immutable.NumericRange
 
 object NumericRangeGen {
 
-  implicit def arbitraryNumericRanges[T: Arbitrary : Choose](implicit precision: IntegralBounds[T]): Arbitrary[NumericRange[T]] = {
-    import precision.num
-    precision match {
-      case _: IntegralWithoutBounds[_] => arbitraryUnboundedNumericRanges[T]
-      case bounded: BoundedIntegral[T] =>
-        implicit val boundedPrecision: BoundedIntegral[T] = bounded
-        arbitraryBoundedNumericRanges[T]
+  implicit def arbitraryNumericRanges[T: Arbitrary : Choose](implicit integral: Integral[T],
+                                                             bounds: NumericBounds[T]): Arbitrary[NumericRange[T]] = {
+    bounds match {
+      case _: NumericBoundsToInfinity[_] => arbitraryUnboundedNumericRanges[T]
+      case _                             => arbitraryBoundedNumericRanges[T]
     }
   }
 
@@ -38,17 +36,17 @@ object NumericRangeGen {
     }
   }
 
-  private def arbitraryBoundedNumericRanges[T: Arbitrary : Choose](implicit precision: BoundedIntegral[T]): Arbitrary[NumericRange[T]] = {
+  private def arbitraryBoundedNumericRanges[T: Arbitrary : Choose](implicit integral: Integral[T],
+                                                                   bounds: NumericBounds[T]): Arbitrary[NumericRange[T]] = {
     Arbitrary {
-      import precision._
-      import num._
       Gen.sized { size =>
-        val numSize = num.fromInt(size)
+        import integral._
+        val numSize = fromInt(size)
         for {
           inclusive <- arbitrary[Boolean]
           step <- chooseStep(numSize)
           start <- chooseStart(numSize, inclusive)
-          numberOfSteps = num.fromInt(size)
+          numberOfSteps = fromInt(size)
           oneSmaller = if (signum(step) < 0) -one else one
           (lower, upper) = if (inclusive) {
             (start + step * (numberOfSteps - one), start + step * numberOfSteps - oneSmaller)
@@ -65,11 +63,10 @@ object NumericRangeGen {
     }
   }
 
-  private[numpty] def chooseStep[T: Choose](size: T)(implicit bounds: NumericBounds[T]) = {
+  private[numpty] def chooseStep[T: Choose](size: T)(implicit integral: Integral[T], bounds: NumericBounds[T]): Gen[T] = {
     import bounds._
-    import num._
-    // TODO: signum of zero is zero
-    if (equiv(size, one) || signum(lower) == signum(upper)) {
+    import integral._
+    if (size == one || signum(lower) == signum(upper)) {
       Gen.chooseNum(lower, upper)
     } else {
       // TODO: Extract this logic and test on its own
@@ -88,7 +85,6 @@ object NumericRangeGen {
       // - Negation of any number other than zero can overflow/underflow but if it does it
       //   will either have the wrong sign or be outside the bounds (if the bounds are different
       //   from the bounds of the underlying value)
-      ???
       //      val lowerStepSize = lower / size // At most half lower bound
       //      val upperStepSize = upper / size // At most half upper bound
       //      val negatedLowerStepSize = negateNegative(lowerStepSize)
@@ -102,12 +98,14 @@ object NumericRangeGen {
       //      val minStep = lowerStepSize + negatedUpperStepSize
       //      val maxStep = upperStepSize + negatedLowerStepSize
       //      Gen.chooseNum(minStep, maxStep)
+      ???
     }
   }
 
-  private def chooseStart[T: Choose](size: T, inclusive: Boolean)(implicit bounds: NumericBounds[T]) = {
+  private def chooseStart[T: Choose](size: T, inclusive: Boolean)
+                                    (implicit numeric: Numeric[T], bounds: NumericBounds[T]) = {
     import bounds._
-    import num._
+    import numeric._
     val max = if (inclusive) upper - size + one else upper - size
     Gen.chooseNum(lower, max)
   }
