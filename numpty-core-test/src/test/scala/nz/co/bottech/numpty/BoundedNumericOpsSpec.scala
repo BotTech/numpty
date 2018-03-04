@@ -34,215 +34,215 @@ class BoundedNumericOpsSpec extends PropSpec with GeneratorDrivenPropertyChecks 
 
   property("Double plus is symmetric") {
     forAll { (x: Double, y: Double) =>
-      BoundedNumericOps.plus(x, y) shouldEqual BoundedNumericOps.plus(y, x)
+      BoundedIntegralOps.plus(x, y) shouldEqual BoundedIntegralOps.plus(y, x)
     }
   }
 
   property("Double positive infinity plus a valid number is positive infinity") {
     forAll(Gen.choose(Double.MinValue, Double.PositiveInfinity)) { x =>
-      BoundedNumericOps.plus(Double.PositiveInfinity, x) shouldBe Left(AboveUpperBound(Double.PositiveInfinity,
+      BoundedIntegralOps.plus(Double.PositiveInfinity, x) shouldBe Left(AboveUpperBound(Double.PositiveInfinity,
         implicitly[NumericBounds[Double]]))
     }
   }
 
   property("Double negative infinity plus a valid number is positive infinity") {
     forAll(Gen.choose(Double.NegativeInfinity, Double.MaxValue)) { x =>
-      BoundedNumericOps.plus(Double.NegativeInfinity, x) shouldBe Left(BelowLowerBound(Double.NegativeInfinity,
+      BoundedIntegralOps.plus(Double.NegativeInfinity, x) shouldBe Left(BelowLowerBound(Double.NegativeInfinity,
         implicitly[NumericBounds[Double]]))
     }
   }
 
   property("Double positive infinity plus a negative infinity is not a number") {
-    BoundedNumericOps.plus(Double.PositiveInfinity, Double.NegativeInfinity) shouldEqual Left(InvalidNumber(Double.NaN))
+    BoundedIntegralOps.plus(Double.PositiveInfinity, Double.NegativeInfinity) shouldEqual Left(InvalidNumber(Double.NaN))
   }
 
   property("Double not a number plus any number is not a number") {
     forAll { x: Double =>
-      BoundedNumericOps.plus(Double.NaN, x) shouldEqual Left(InvalidNumber(Double.NaN))
+      BoundedIntegralOps.plus(Double.NaN, x) shouldEqual Left(InvalidNumber(Double.NaN))
     }
   }
 
   property("A large sum of doubles is positive infinity") {
     forAll(operandsOfLargeSum(smallestDoubleStep)) { case (x, y) =>
-      BoundedNumericOps.plus(x, y) shouldBe Left(AboveUpperBound(Double.PositiveInfinity,
+      BoundedIntegralOps.plus(x, y) shouldBe Left(AboveUpperBound(Double.PositiveInfinity,
         implicitly[NumericBounds[Double]]))
     }
   }
 
   property("A small sum of doubles is negative infinity") {
     forAll(operandsOfSmallSum(smallestDoubleStep)) { case (x, y) =>
-      BoundedNumericOps.plus(x, y) shouldBe Left(BelowLowerBound(Double.NegativeInfinity,
+      BoundedIntegralOps.plus(x, y) shouldBe Left(BelowLowerBound(Double.NegativeInfinity,
         implicitly[NumericBounds[Double]]))
     }
   }
 
   property("A sum of doubles within bounds is the same as addition") {
     forAll(operandsOfSumWithinBounds(nextToZero)) { case (x, y) =>
-      BoundedNumericOps.plus(x, y) shouldBe Right(x + y)
+      BoundedIntegralOps.plus(x, y) shouldBe Right(x + y)
     }
   }
 
   property("Double positive infinity minus a valid number is positive infinity") {
     forAll(Gen.choose(Double.NegativeInfinity, Double.MaxValue)) { x =>
-      BoundedNumericOps.minus(Double.PositiveInfinity, x) shouldBe Left(AboveUpperBound(Double.PositiveInfinity,
+      BoundedIntegralOps.minus(Double.PositiveInfinity, x) shouldBe Left(AboveUpperBound(Double.PositiveInfinity,
         implicitly[NumericBounds[Double]]))
     }
   }
 
   property("A valid double minus positive infinity is negative infinity") {
     forAll(Gen.choose(Double.NegativeInfinity, Double.MaxValue)) { x =>
-      BoundedNumericOps.minus(x, Double.PositiveInfinity) shouldBe Left(BelowLowerBound(Double.NegativeInfinity,
+      BoundedIntegralOps.minus(x, Double.PositiveInfinity) shouldBe Left(BelowLowerBound(Double.NegativeInfinity,
         implicitly[NumericBounds[Double]]))
     }
   }
 
   property("Double positive infinity minus positive infinity is not a valid number") {
-    BoundedNumericOps.minus(Double.PositiveInfinity,
+    BoundedIntegralOps.minus(Double.PositiveInfinity,
       Double.PositiveInfinity) shouldEqual Left(InvalidNumber(Double.NaN))
   }
 
   property("Double negative infinity minus a valid number is negative infinity") {
     forAll(Gen.choose(Double.MinValue, Double.PositiveInfinity)) { x =>
-      BoundedNumericOps.minus(Double.NegativeInfinity, x) shouldBe Left(BelowLowerBound(Double.NegativeInfinity,
+      BoundedIntegralOps.minus(Double.NegativeInfinity, x) shouldBe Left(BelowLowerBound(Double.NegativeInfinity,
         implicitly[NumericBounds[Double]]))
     }
   }
 
   property("A valid double minus negative infinity is negative infinity") {
     forAll(Gen.choose(Double.MinValue, Double.PositiveInfinity)) { x =>
-      BoundedNumericOps.minus(x, Double.NegativeInfinity) shouldBe Left(AboveUpperBound(Double.PositiveInfinity,
+      BoundedIntegralOps.minus(x, Double.NegativeInfinity) shouldBe Left(AboveUpperBound(Double.PositiveInfinity,
         implicitly[NumericBounds[Double]]))
     }
   }
 
   property("Double negative infinity minus negative infinity is not a number") {
-    BoundedNumericOps.minus(Double.NegativeInfinity,
+    BoundedIntegralOps.minus(Double.NegativeInfinity,
       Double.NegativeInfinity) shouldEqual Left(InvalidNumber(Double.NaN))
   }
 
   property("Any double minus not a number is not a number") {
     forAll { x: Double =>
-      BoundedNumericOps.minus(x, Double.NaN) shouldEqual Left(InvalidNumber(Double.NaN))
+      BoundedIntegralOps.minus(x, Double.NaN) shouldEqual Left(InvalidNumber(Double.NaN))
     }
   }
 
   property("Double not a number minus a double is not a number") {
     forAll { x: Double =>
-      BoundedNumericOps.minus(Double.NaN, x) shouldEqual Left(InvalidNumber(Double.NaN))
+      BoundedIntegralOps.minus(Double.NaN, x) shouldEqual Left(InvalidNumber(Double.NaN))
     }
   }
 
   property("A large difference of doubles is positive infinity") {
     forAll(operandsOfLargeDifference(smallestDoubleStep)) { case (x, y) =>
-      BoundedNumericOps.minus(x, y) shouldBe Left(AboveUpperBound(Double.PositiveInfinity,
+      BoundedIntegralOps.minus(x, y) shouldBe Left(AboveUpperBound(Double.PositiveInfinity,
         implicitly[NumericBounds[Double]]))
     }
   }
 
   property("A small difference of doubles is negative infinity") {
     forAll(operandsOfSmallDifference(smallestDoubleStep)) { case (x, y) =>
-      BoundedNumericOps.minus(x, y) shouldBe Left(BelowLowerBound(Double.NegativeInfinity,
+      BoundedIntegralOps.minus(x, y) shouldBe Left(BelowLowerBound(Double.NegativeInfinity,
         implicitly[NumericBounds[Double]]))
     }
   }
 
   property("A difference of doubles within bounds is the same as subtraction") {
     forAll(operandsOfDifferenceWithinBounds(nextToZero)) { case (x, y) =>
-      BoundedNumericOps.minus(x, y) shouldBe Right(x - y)
+      BoundedIntegralOps.minus(x, y) shouldBe Right(x - y)
     }
   }
 
   property("Double times is symmetric") {
     forAll { (x: Double, y: Double) =>
-      BoundedNumericOps.times(x, y) shouldEqual BoundedNumericOps.times(y, x)
+      BoundedIntegralOps.times(x, y) shouldEqual BoundedIntegralOps.times(y, x)
     }
   }
 
   property("Double positive infinity times a positive number is positive infinity") {
     forAll(Gen.choose(Double.MinPositiveValue, Double.PositiveInfinity)) { x =>
-      BoundedNumericOps.times(Double.PositiveInfinity, x) shouldBe Left(AboveUpperBound(Double.PositiveInfinity,
+      BoundedIntegralOps.times(Double.PositiveInfinity, x) shouldBe Left(AboveUpperBound(Double.PositiveInfinity,
         implicitly[NumericBounds[Double]]))
     }
   }
 
   property("Double positive infinity times zero is not a number") {
-    BoundedNumericOps.times(Double.PositiveInfinity, 0) shouldEqual Left(InvalidNumber(Double.NaN))
+    BoundedIntegralOps.times(Double.PositiveInfinity, 0) shouldEqual Left(InvalidNumber(Double.NaN))
   }
 
   property("Double positive infinity times a negative number is negative infinity") {
     forAll(Gen.choose(Double.NegativeInfinity, -Double.MinPositiveValue)) { x =>
-      BoundedNumericOps.times(Double.PositiveInfinity, x) shouldBe Left(BelowLowerBound(Double.NegativeInfinity,
+      BoundedIntegralOps.times(Double.PositiveInfinity, x) shouldBe Left(BelowLowerBound(Double.NegativeInfinity,
         implicitly[NumericBounds[Double]]))
     }
   }
 
   property("Double negative infinity times a negative number is positive infinity") {
     forAll(Gen.choose(Double.NegativeInfinity, -Double.MinPositiveValue)) { x =>
-      BoundedNumericOps.times(Double.NegativeInfinity, x) shouldBe Left(AboveUpperBound(Double.PositiveInfinity,
+      BoundedIntegralOps.times(Double.NegativeInfinity, x) shouldBe Left(AboveUpperBound(Double.PositiveInfinity,
         implicitly[NumericBounds[Double]]))
     }
   }
 
   property("Double negative infinity times zero is not a number") {
-    BoundedNumericOps.times(Double.NegativeInfinity, 0) shouldEqual Left(InvalidNumber(Double.NaN))
+    BoundedIntegralOps.times(Double.NegativeInfinity, 0) shouldEqual Left(InvalidNumber(Double.NaN))
   }
 
   property("Double negative infinity times a positive number is negative infinity") {
     forAll(Gen.choose(Double.MinPositiveValue, Double.PositiveInfinity)) { x =>
-      BoundedNumericOps.times(Double.NegativeInfinity, x) shouldBe Left(BelowLowerBound(Double.NegativeInfinity,
+      BoundedIntegralOps.times(Double.NegativeInfinity, x) shouldBe Left(BelowLowerBound(Double.NegativeInfinity,
         implicitly[NumericBounds[Double]]))
     }
   }
 
   property("Any double times not a number is not a number") {
     forAll { x: Double =>
-      BoundedNumericOps.times(x, Double.NaN) shouldEqual Left(InvalidNumber(Double.NaN))
+      BoundedIntegralOps.times(x, Double.NaN) shouldEqual Left(InvalidNumber(Double.NaN))
     }
   }
 
   property("A large product of doubles is positive infinity") {
     forAll(operandsOfLargeProduct(smallestDoubleFactor)(Math.nextUp)) { case (x, y) =>
-      BoundedNumericOps.times(x, y) shouldBe Left(AboveUpperBound(Double.PositiveInfinity,
+      BoundedIntegralOps.times(x, y) shouldBe Left(AboveUpperBound(Double.PositiveInfinity,
         implicitly[NumericBounds[Double]]))
     }
   }
 
   property("A small product of doubles is negative infinity") {
     forAll(operandsOfSmallProduct(smallestDoubleFactor)(Math.nextUp)) { case (x, y) =>
-      BoundedNumericOps.times(x, y) shouldBe Left(BelowLowerBound(Double.NegativeInfinity,
+      BoundedIntegralOps.times(x, y) shouldBe Left(BelowLowerBound(Double.NegativeInfinity,
         implicitly[NumericBounds[Double]]))
     }
   }
 
   property("A product of doubles within bounds is the same as double multiplication") {
     forAll(operandsOfProductWithinBounds(nextToZero)) { case (x, y) =>
-      BoundedNumericOps.times(x, y) shouldBe Right(x * y)
+      BoundedIntegralOps.times(x, y) shouldBe Right(x * y)
     }
   }
 
   property("Negating double positive infinity is negative infinity") {
-    BoundedNumericOps.negate(Double.PositiveInfinity) shouldBe Left(BelowLowerBound(Double.NegativeInfinity,
+    BoundedIntegralOps.negate(Double.PositiveInfinity) shouldBe Left(BelowLowerBound(Double.NegativeInfinity,
       implicitly[NumericBounds[Double]]))
   }
 
   property("Negating double negative infinity is positive infinity") {
-    BoundedNumericOps.negate(Double.NegativeInfinity) shouldBe Left(AboveUpperBound(Double.PositiveInfinity,
+    BoundedIntegralOps.negate(Double.NegativeInfinity) shouldBe Left(AboveUpperBound(Double.PositiveInfinity,
       implicitly[NumericBounds[Double]]))
   }
 
   property("Negating double not a number is not a number") {
-    BoundedNumericOps.negate(Double.NaN) shouldEqual Left(InvalidNumber(Double.NaN))
+    BoundedIntegralOps.negate(Double.NaN) shouldEqual Left(InvalidNumber(Double.NaN))
   }
 
   property("Negating a double is the same as negation") {
     forAll(Gen.choose(Double.MinValue, Double.MaxValue)) { x: Double =>
-      BoundedNumericOps.negate(x) shouldBe Right(-x)
+      BoundedIntegralOps.negate(x) shouldBe Right(-x)
     }
   }
 
   property("Double from int is the same as to double") {
     forAll { x: Int =>
-      BoundedNumericOps.fromInt[Double](x) shouldBe Right(x.toDouble)
+      BoundedIntegralOps.fromInt[Double](x) shouldBe Right(x.toDouble)
     }
   }
 
