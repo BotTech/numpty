@@ -1,6 +1,5 @@
 package nz.co.bottech.numpty
 
-// TODO: Replace this with an Interval
 trait NumericBounds[T] {
 
   def upper: T
@@ -9,8 +8,6 @@ trait NumericBounds[T] {
 }
 
 object NumericBounds {
-
-  // TODO: Refined already has a Min and Max!
 
   implicit object ByteBounds extends NumericBounds[Byte] {
 
